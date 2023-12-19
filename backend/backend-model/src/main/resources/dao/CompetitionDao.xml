@@ -1,0 +1,139 @@
+<JdbcEntitySetup
+        xmlns="http://www.ontimize.com/schema/jdbc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
+        catalog="" schema="${mainschema}" table="COMPETITIONS"
+        datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
+    <DeleteKeys>
+        <Column>COMP_ID</Column>
+    </DeleteKeys>
+    <UpdateKeys>
+        <Column>COMP_ID</Column>
+    </UpdateKeys>
+    <GeneratedKey>comp_id</GeneratedKey>
+    <Queries>
+        <Query id="publicCount">
+            <Sentence>
+                <![CDATA[
+                    WITH PUBLIC_COUNT AS (
+                        SELECT c.COMP_ID, c.COMP_NAME, c.COMP_DESCRIPTION, c.COMP_ISPUBLIC, count(uc.USER_) AS NUM_USERS, COUNT(UC.USER_) > 10 AS COMPLETE
+                        FROM COMPETITIONS c
+                        INNER JOIN USERS_COMPETITIONS uc
+                        ON c.COMP_ID = uc.COMP_ID
+                        WHERE c.COMP_ISPUBLIC = true
+                        GROUP BY c.COMP_ID
+                        HAVING COUNT(UC.USER_) < 10)
+                    SELECT #COLUMNS#
+                    FROM PUBLIC_COUNT
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="competitionById">
+            <Sentence>
+                <![CDATA[
+                    WITH COMP_BY_ID AS
+                        (SELECT C.COMP_ID, UC.USER_, UC.UC_ID, C.COMP_NAME, UC.UC_AVAILABLE_MONEY, c.COMP_DESCRIPTION, c.COMP_CODE
+                        FROM COMPETITIONS C
+                        LEFT JOIN USERS_COMPETITIONS UC
+                        ON C.COMP_ID = UC.COMP_ID)
+                    SELECT #COLUMNS#
+                    FROM COMP_BY_ID
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="rankingById">
+            <AmbiguousColumns>
+                <AmbiguousColumn name="COMP_ID" prefix="C" />
+            </AmbiguousColumns>
+            <Sentence>
+                <![CDATA[
+                    SELECT C.COMP_ID, C.COMP_NAME, UC.USER_, UC.UC_ID, UC.UC_AVAILABLE_MONEY, c.COMP_DESCRIPTION, c.COMP_CODE, sum(RP.RP_POINTS) as TOTAL_POINTS
+                    FROM COMPETITIONS C
+                    LEFT JOIN USERS_COMPETITIONS UC
+                    ON C.COMP_ID = UC.COMP_ID
+                    LEFT JOIN USERS_COMPETITIONS_PILOTS UCP
+                    ON UCP.UC_ID = UC.UC_ID
+                    LEFT JOIN RACES_POINTS RP
+                    ON RP.UCP_ID = UCP.UCP_ID
+                    #WHERE#
+                    GROUP BY UC.USER_, C.COMP_ID, UC.UC_AVAILABLE_MONEY, UC.UC_ID
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="rankingByUserAndId">
+            <Sentence>
+                <![CDATA[
+                    WITH RANKING AS (
+                        SELECT C.COMP_ID, UC.USER_, C.COMP_NAME, RC.RAC_ROUND, sum(RP.RP_POINTS) as TOTAL_POINTS, RP.RP_POINTS, P.PIL_SURNAME
+                        FROM COMPETITIONS C
+                        LEFT JOIN USERS_COMPETITIONS UC
+                        ON C.COMP_ID = UC.COMP_ID
+                        LEFT JOIN USERS_COMPETITIONS_PILOTS UCP
+                        ON UCP.UC_ID = UC.UC_ID
+                        LEFT JOIN RACES_POINTS RP
+                        ON RP.UCP_ID = UCP.UCP_ID
+                        LEFT JOIN RESULTS R
+                        ON R.RES_ID = RP.RES_ID
+                        LEFT JOIN RACES RC
+                        ON RC.RAC_ID = R.RAC_ID
+                        LEFT JOIN PILOTS P
+	                    ON P.PIL_ID = UCP.PIL_ID
+	                    WHERE RC.RAC_ROUND IS NOT NULL
+                        GROUP BY UC.USER_, C.COMP_ID, RC.RAC_ROUND, RP.RP_POINTS, P.PIL_SURNAME
+                    )
+                    SELECT #COLUMNS#
+                    FROM RANKING
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="rankingByUserRoundId">
+            <Sentence>
+                <![CDATA[
+                    WITH RANKING AS (
+                        SELECT C.COMP_ID, UC.USER_, C.COMP_NAME, RC.RAC_ROUND, sum(RP.RP_POINTS) as TOTAL_POINTS
+                        FROM COMPETITIONS C
+                        LEFT JOIN USERS_COMPETITIONS UC
+                        ON C.COMP_ID = UC.COMP_ID
+                        LEFT JOIN USERS_COMPETITIONS_PILOTS UCP
+                        ON UCP.UC_ID = UC.UC_ID
+                        LEFT JOIN RACES_POINTS RP
+                        ON RP.UCP_ID = UCP.UCP_ID
+                        LEFT JOIN RESULTS R
+                        ON R.RES_ID = RP.RES_ID
+                        LEFT JOIN RACES RC
+                        ON RC.RAC_ID = R.RAC_ID
+                        WHERE RC.RAC_ROUND IS NOT NULL
+                        GROUP BY UC.USER_, C.COMP_ID, RC.RAC_ROUND
+                        ORDER BY RC.RAC_ROUND ASC
+                    )
+                    SELECT #COLUMNS#
+                    FROM RANKING
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="availableMoneyFilter">
+            <Sentence>
+                <![CDATA[
+                    WITH AVAIL_MONEY AS
+                        (SELECT C.COMP_ID, C.COMP_NAME, UC.USER_, UC.UC_ID, UC.UC_AVAILABLE_MONEY, c.COMP_DESCRIPTION, c.COMP_CODE
+                        FROM COMPETITIONS C
+                        LEFT JOIN USERS_COMPETITIONS UC
+                        ON C.COMP_ID = UC.COMP_ID)
+                    SELECT #COLUMNS#
+                    FROM AVAIL_MONEY
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+    </Queries>
+</JdbcEntitySetup>

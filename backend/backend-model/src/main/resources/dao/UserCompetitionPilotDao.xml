@@ -1,0 +1,91 @@
+<JdbcEntitySetup
+        xmlns="http://www.ontimize.com/schema/jdbc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
+        catalog="" schema="${mainschema}" table="USERS_COMPETITIONS_PILOTS"
+        datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
+    <DeleteKeys>
+        <Column>UCP_ID</Column>
+    </DeleteKeys>
+    <UpdateKeys>
+        <Column>UCP_ID</Column>
+    </UpdateKeys>
+    <Queries>
+        <Query id="pilotsByCompetition">
+            <AmbiguousColumns>
+                <AmbiguousColumn name="PIL_ID" prefix="P" />
+                <AmbiguousColumn name="UC_ID" prefix="T" />
+                <AmbiguousColumn name="UCP_ID" prefix="T" />
+            </AmbiguousColumns>
+            <Sentence>
+                <![CDATA[
+                    WITH T AS (
+                        WITH OWNED_PILOTS AS (
+                            SELECT PS.PIL_ID, UCP.UCP_ID, UCP.UCP_DATE_SOLD, UCP.UC_ID
+                            FROM PILOTS PS
+                            LEFT JOIN USERS_COMPETITIONS_PILOTS UCP ON PS.PIL_ID = UCP.PIL_ID
+                            WHERE UCP.UCP_DATE_SOLD IS NULL
+                        )
+                        SELECT UC.COMP_ID, UC.USER_, UC.UC_ID, APS.PIL_ID, APS.UCP_ID
+                        FROM OWNED_PILOTS APS
+                        LEFT OUTER JOIN USERS_COMPETITIONS UC ON APS.UC_ID = UC.UC_ID
+                        #WHERE#
+                   )
+                    SELECT #COLUMNS#
+                    FROM PILOTS P
+                    LEFT JOIN T ON P.PIL_ID = T.PIL_ID
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="filter">
+            <Sentence>
+                <![CDATA[
+                    SELECT #COLUMNS#
+                    FROM PILOTS P
+                    LEFT JOIN (
+                        SELECT UC.COMP_ID, PS.PIL_ID AS PIL, UC.USER_, UC.UC_ID, UCP.UCP_ID, UCP.UCP_DATE_SOLD
+                        FROM PILOTS PS
+                        LEFT OUTER JOIN USERS_COMPETITIONS_PILOTS UCP ON PS.PIL_ID = UCP.PIL_ID
+                        LEFT OUTER JOIN USERS_COMPETITIONS UC ON UCP.UC_ID = UC.UC_ID
+                        #WHERE#
+                        AND UCP.UCP_DATE_SOLD IS NULL)
+                    T ON P.PIL_ID = T.PIL
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="userCompetitionId">
+            <AmbiguousColumns>
+                <AmbiguousColumn name="UC_ID" prefix="UC" />
+            </AmbiguousColumns>
+            <Sentence>
+                <![CDATA[
+                    SELECT #COLUMNS#
+                    FROM USERS_COMPETITIONS_PILOTS UCP
+                    INNER JOIN USERS_COMPETITIONS UC ON UCP.UC_ID = UC.UC_ID
+                    #WHERE#
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="ownedPilotByCompetition">
+            <AmbiguousColumns>
+                <AmbiguousColumn name="UC_ID" prefix="UCP" />
+            </AmbiguousColumns>
+            <Sentence>
+                <![CDATA[
+                    WITH OWNED_PILOTS AS (
+                        select UCP.*, UC.comp_id
+                        from USERS_COMPETITIONS_PILOTS UCP
+                        LEFT JOIN USERS_COMPETITIONS UC ON UCP.UC_ID = UC.UC_ID
+                        WHERE UCP.UCP_DATE_SOLD IS NULL
+                    )
+                    SELECT #COLUMNS#
+                    FROM OWNED_PILOTS
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+    </Queries>
+</JdbcEntitySetup>

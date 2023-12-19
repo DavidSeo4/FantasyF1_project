@@ -1,0 +1,31 @@
+<JdbcEntitySetup
+        xmlns="http://www.ontimize.com/schema/jdbc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
+        catalog="" schema="${mainschema}" table="PILOTS_PRICES"
+        datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
+    <DeleteKeys>
+        <Column>PP_ID</Column>
+    </DeleteKeys>
+    <UpdateKeys>
+        <Column>PP_ID</Column>
+    </UpdateKeys>
+    <Queries>
+        <Query id="listNamePrice">
+            <Sentence>
+                <![CDATA[
+                    WITH NAMES_PRICES AS (
+                        SELECT PP.PP_ID, P.PIL_ID, P.PIL_NAME, P.PIL_SURNAME, PP.PP_PRICE, PP_VARIATION, R.RAC_ID, R.RAC_ROUND
+                        FROM PILOTS_PRICES PP
+                        LEFT JOIN PILOTS P ON P.PIL_ID = PP.PIL_ID
+                        LEFT JOIN RACES R ON PP.RAC_ID = R.RAC_ID
+                        ORDER BY PP.PP_ID DESC)
+                    SELECT #COLUMNS#
+                    FROM NAMES_PRICES
+                    #WHERE#
+                    #ORDER#;
+                ]]>
+            </Sentence>
+        </Query>
+    </Queries>
+</JdbcEntitySetup>

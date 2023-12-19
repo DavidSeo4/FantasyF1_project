@@ -1,0 +1,45 @@
+<JdbcEntitySetup
+        xmlns="http://www.ontimize.com/schema/jdbc"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.ontimize.com/schema/jdbc http://www.ontimize.com/schema/jdbc/ontimize-jdbc-dao.xsd"
+        catalog="" schema="${mainschema}" table="RESULTS"
+        datasource="mainDataSource" sqlhandler="dbSQLStatementHandler">
+    <DeleteKeys>
+        <Column>RES_ID</Column>
+    </DeleteKeys>
+    <UpdateKeys>
+        <Column>RES_ID</Column>
+    </UpdateKeys>
+    <Queries>
+        <Query id="generalClasification">
+            <Sentence>
+                <![CDATA[
+                    SELECT P.PIL_SURNAME, SUM(R.RES_POINTS) AS TOTAL, P.PIL_PRICE
+                    FROM PILOTS P
+                    INNER JOIN RESULTS R ON
+                    P.PIL_ID = R.PIL_ID
+                    GROUP BY P.PIL_ID, P.PIL_SURNAME
+                    ORDER BY TOTAL DESC;
+                ]]>
+            </Sentence>
+        </Query>
+        <Query id="roundClasification">
+            <AmbiguousColumns>
+                <AmbiguousColumn name="PIL_ID" prefix="P" />
+                <AmbiguousColumn name="RAC_ID" prefix="R" />
+            </AmbiguousColumns>
+            <Sentence>
+                <![CDATA[
+                    SELECT R.RAC_ID, RA.RAC_ROUND, P.PIL_ID, P.PIL_SURNAME, R.RES_POINTS, R.RES_POSITION, R.RES_POSITION_TEXT
+                    FROM PILOTS P
+                    INNER JOIN RESULTS R ON
+                    P.PIL_ID = R.PIL_ID
+                    INNER JOIN RACES RA ON
+                    RA.RAC_ID = R.RAC_ID
+                    #WHERE#
+                    ORDER BY R.RES_POSITION;
+                ]]>
+            </Sentence>
+        </Query>
+    </Queries>
+</JdbcEntitySetup>
